@@ -15,6 +15,7 @@
  */
 package com.example.android.background;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import android.widget.Toast;
 
 import com.example.android.background.sync.ReminderTasks;
 import com.example.android.background.sync.WaterReminderIntentService;
+import com.example.android.background.utilities.NotificationUtils;
 import com.example.android.background.utilities.PreferenceUtilities;
 
 public class MainActivity extends AppCompatActivity implements
@@ -43,16 +45,13 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /** Get the views **/
-        mWaterCountDisplay = (TextView) findViewById(R.id.tv_water_count);
-        mChargingCountDisplay = (TextView) findViewById(R.id.tv_charging_reminder_count);
-        mChargingImageView = (ImageView) findViewById(R.id.iv_power_increment);
+        mWaterCountDisplay = findViewById(R.id.tv_water_count);
+        mChargingCountDisplay = findViewById(R.id.tv_charging_reminder_count);
+        mChargingImageView = findViewById(R.id.iv_power_increment);
 
-        /** Set the original values in the UI **/
         updateWaterCount();
         updateChargingReminderCount();
 
-        /** Setup the shared preference listener **/
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
     }
@@ -60,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * Updates the TextView to display the new water count from SharedPreferences
      */
+    @SuppressLint("SetTextI18n")
     private void updateWaterCount() {
         int waterCount = PreferenceUtilities.getWaterCount(this);
         mWaterCountDisplay.setText(waterCount+"");
@@ -90,11 +90,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     // TODO (15) Create a method called testNotification that triggers NotificationUtils' remindUserBecauseCharging
+    public void testNotification(View view){
+        NotificationUtils.RemindUserBecauseCharging(this);
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        /** Cleanup the shared preference listener **/
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(this);
     }
