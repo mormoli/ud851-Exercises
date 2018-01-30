@@ -15,11 +15,14 @@
  */
 package com.example.android.background;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -50,17 +53,17 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /** Get the views **/
-        mWaterCountDisplay = (TextView) findViewById(R.id.tv_water_count);
-        mChargingCountDisplay = (TextView) findViewById(R.id.tv_charging_reminder_count);
-        mChargingImageView = (ImageView) findViewById(R.id.iv_power_increment);
+        // Get the views
+        mWaterCountDisplay = findViewById(R.id.tv_water_count);
+        mChargingCountDisplay = findViewById(R.id.tv_charging_reminder_count);
+        mChargingImageView = findViewById(R.id.iv_power_increment);
 
-        /** Set the original values in the UI **/
+        // Set the original values in the UI
         updateWaterCount();
         updateChargingReminderCount();
         ReminderUtilities.scheduleChargingReminder(this);
 
-        /** Setup the shared preference listener **/
+        // Setup the shared preference listener
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(this);
 
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements
         mChargingIntentFilter.addAction(Intent.ACTION_POWER_CONNECTED);
         mChargingIntentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
     }
-
+    @SuppressWarnings("ConstantConditions")
     @Override
     protected void onResume() {
         super.onResume();
@@ -84,21 +87,31 @@ public class MainActivity extends AppCompatActivity implements
         // isCharging.
 
         // TODO (1) Check if you are on Android M or later, if so...
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // TODO (2) Get a BatteryManager instance using getSystemService()
+            BatteryManager batteryManager = (BatteryManager) getSystemService(BATTERY_SERVICE);
             // TODO (3) Call isCharging on the battery manager and pass the result on to your show
             // charging method
-
-        // TODO (4) If your user is not on M+, then...
+            showCharging(batteryManager.isCharging());
+        } else {
+            // TODO (4) If your user is not on M+, then...
             // TODO (5) Create a new intent filter with the action ACTION_BATTERY_CHANGED. This is a
             // sticky broadcast that contains a lot of information about the battery state.
+            IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
             // TODO (6) Set a new Intent object equal to what is returned by registerReceiver, passing in null
             // for the receiver. Pass in your intent filter as well. Passing in null means that you're
             // getting the current state of a sticky broadcast - the intent returned will contain the
             // battery information you need.
+            Intent currentBatteryIntent = registerReceiver(null, intentFilter);
             // TODO (7) Get the integer extra BatteryManager.EXTRA_STATUS. Check if it matches
             // BatteryManager.BATTERY_STATUS_CHARGING or BatteryManager.BATTERY_STATUS_FULL. This means
             // the battery is currently charging.
+            int batteryStatus = currentBatteryIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            boolean isCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    batteryStatus == BatteryManager.BATTERY_STATUS_FULL;
             // TODO (8) Update the UI using your showCharging method
+            showCharging(isCharging);
+        }
 
         registerReceiver(mChargingReceiver, mChargingIntentFilter);
     }
@@ -113,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * Updates the TextView to display the new water count from SharedPreferences
      */
+    @SuppressLint("SetTextI18n")
     private void updateWaterCount() {
         int waterCount = PreferenceUtilities.getWaterCount(this);
         mWaterCountDisplay.setText(waterCount+"");
@@ -146,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        /** Cleanup the shared preference listener **/
+        // Cleanup the shared preference listener
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(this);
     }
@@ -174,6 +188,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private class ChargingBroadcastReceiver extends BroadcastReceiver {
+        @SuppressWarnings("ConstantConditions")
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
