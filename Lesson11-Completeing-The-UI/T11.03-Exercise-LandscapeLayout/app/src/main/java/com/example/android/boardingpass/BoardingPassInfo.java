@@ -41,7 +41,7 @@ public class BoardingPassInfo {
 
     public int barCodeImageResource;
 
-    public long getMinutesUntilBoarding() {
+    long getMinutesUntilBoarding() {
         long millisUntilBoarding = boardingTime.getTime() - System.currentTimeMillis();
         return TimeUnit.MILLISECONDS.toMinutes(millisUntilBoarding);
     }
